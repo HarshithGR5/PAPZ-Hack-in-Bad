@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Face Verification</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    video, canvas {
+      border: 2px solid white;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #e50914;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff1b2e;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Face Verification</h1>
+
+  <video id="video" width="320" height="240" autoplay></video><br>
+  <button id="capture">Capture & Verify</button>
+
+  <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+
+  <div id="message"></div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('capture');
+    const messageDiv = document.getElementById('message');
+
+    // Get webcam stream
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error('Error accessing webcam:', err);
+        messageDiv.textContent = 'Cannot access webcam';
+      });
+
+    captureButton.addEventListener('click', () => {
+      // Capture image to canvas
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const faceImage = canvas.toDataURL('image/jpeg');
+
+      fetch('/admin_face', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          'face_image': faceImage
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          messageDiv.textContent = data.message;
+          messageDiv.style.color = 'lightgreen';
+        } else {
+          messageDiv.textContent = data.message;
+          messageDiv.style.color = 'red';
+        }
+      })
+      .catch(err => {
+        console.error('Error verifying face:', err);
+        messageDiv.textContent = 'An error occurred';
+        messageDiv.style.color = 'red';
+      });
+    });
+  </script>
+</body>
+</html>

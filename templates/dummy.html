@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signup with Face Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #video-container {
+            margin: 20px 0;
+        }
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+        }
+        #capture-btn {
+            margin-top: 10px;
+        }
+        #canvas {
+            display: none;
+        }
+        #captured-image {
+            margin-top: 10px;
+            max-width: 400px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Signup with Face Recognition</h1>
+    
+    <form id="signup-form" method="POST" action="/dummy">
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="metamask_address">MetaMask Address:</label>
+            <input type="text" id="metamask_address" name="metamask_address" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Face Recognition:</label>
+            <div id="video-container">
+                <video id="video" autoplay></video>
+                <button type="button" id="capture-btn">Capture Face</button>
+                <canvas id="canvas"></canvas>
+                <img id="captured-image" style="display: none;">
+                <input type="hidden" id="face_image" name="face_image">
+            </div>
+        </div>
+        
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <script>
+        // Access the webcam
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const capturedImage = document.getElementById('captured-image');
+        const faceImageInput = document.getElementById('face_image');
+        const context = canvas.getContext('2d');
+
+        // Get access to the camera
+        if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                })
+                .catch(function(error) {
+                    console.error("Camera error: ", error);
+                    alert("Could not access the camera. Please ensure you have a camera connected and have granted permission.");
+                });
+        } else {
+            alert("Sorry, your browser does not support camera access.");
+        }
+
+        // Capture image from camera
+        captureBtn.addEventListener('click', function() {
+            // Set canvas dimensions to match the video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw the video frame to the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert canvas to base64 image data
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            // Display the captured image and hide the video
+            capturedImage.src = imageData;
+            capturedImage.style.display = 'block';
+            video.style.display = 'none';
+            captureBtn.textContent = 'Recapture';
+            
+            // Store the base64 image data in the hidden input
+            faceImageInput.value = imageData;
+            
+            // When recapture is clicked, show the video again
+            if (captureBtn.textContent === 'Recapture') {
+                captureBtn.addEventListener('click', function() {
+                    video.style.display = 'block';
+                    capturedImage.style.display = 'none';
+                    captureBtn.textContent = 'Capture Face';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
